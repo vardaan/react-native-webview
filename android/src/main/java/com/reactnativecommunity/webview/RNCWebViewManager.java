@@ -709,7 +709,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
     }
   }
 
-  protected static class RNCWebViewClient extends WebViewClient {
+  public static class RNCWebViewClient extends WebViewClient {
 
     protected boolean mLastLoadFailed = false;
     protected @Nullable
