@@ -10,8 +10,11 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+
 import androidx.annotation.RequiresApi;
+
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -151,7 +154,6 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
     RNCWebView webView = createRNCWebViewInstance(reactContext);
     setupWebChromeClient(reactContext, webView);
     reactContext.addLifecycleEventListener(webView);
-    mWebViewConfig.configWebView(webView);
     WebSettings settings = webView.getSettings();
     settings.setBuiltInZoomControls(true);
     settings.setDisplayZoomControls(false);
@@ -211,7 +213,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
         }
       }
     });
-
+    mWebViewConfig.configWebView(webView);
     return webView;
   }
 
@@ -418,7 +420,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
     WebView view,
     @Nullable Boolean allowsFullscreenVideo) {
     mAllowsFullscreenVideo = allowsFullscreenVideo != null && allowsFullscreenVideo;
-    setupWebChromeClient((ReactContext)view.getContext(), view);
+    setupWebChromeClient((ReactContext) view.getContext(), view);
   }
 
   @ReactProp(name = "allowFileAccess")
@@ -438,7 +440,12 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
   @Override
   protected void addEventEmitters(ThemedReactContext reactContext, WebView view) {
     // Do not register default touch emitter and let WebView implementation handle touches
-    view.setWebViewClient(new RNCWebViewClient());
+    if (view instanceof RNCWebView) {
+      if (((RNCWebView) view).getRNCWebViewClient() == null)
+        view.setWebViewClient(new RNCWebViewClient());
+    } else {
+      view.setWebViewClient(new RNCWebViewClient());
+    }
   }
 
   @Override
@@ -620,7 +627,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
         view,
         new TopShouldStartLoadWithRequestEvent(
           view.getId(),
-          createWebViewEvent(view, url)));
+					createWebViewEvent(view, url)));
       return true;
     }
 
@@ -628,7 +635,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
     @TargetApi(Build.VERSION_CODES.N)
     @Override
     public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-      final String url = request.getUrl().toString();
+			final String url = request.getUrl().toString();
       return this.shouldOverrideUrlLoading(view, url);
     }
 
@@ -896,16 +903,16 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
 
       if (mOnScrollDispatchHelper.onScrollChanged(x, y)) {
         ScrollEvent event = ScrollEvent.obtain(
-                this.getId(),
-                ScrollEventType.SCROLL,
-                x,
-                y,
-                mOnScrollDispatchHelper.getXFlingVelocity(),
-                mOnScrollDispatchHelper.getYFlingVelocity(),
-                this.computeHorizontalScrollRange(),
-                this.computeVerticalScrollRange(),
-                this.getWidth(),
-                this.getHeight());
+          this.getId(),
+          ScrollEventType.SCROLL,
+          x,
+          y,
+          mOnScrollDispatchHelper.getXFlingVelocity(),
+          mOnScrollDispatchHelper.getYFlingVelocity(),
+          this.computeHorizontalScrollRange(),
+          this.computeVerticalScrollRange(),
+          this.getWidth(),
+          this.getHeight());
 
         dispatchEvent(this, event);
       }
